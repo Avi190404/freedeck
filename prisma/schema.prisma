@@ -1,0 +1,57 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Your Trello Clone Models ---
+
+model Board {
+  id        String   @id @default(uuid())
+  title     String
+  lists     List[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model List {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int      // Keeps lists in specific order (0, 1, 2)
+  
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  
+  cards     Card[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String    @id @default(uuid())
+  title       String
+  description String?   @db.Text
+  order       Int       // Keeps cards in specific order
+  
+  // Timeline features
+  startDate   DateTime?
+  dueDate     DateTime?
+  isCompleted Boolean   @default(false)
+
+  listId      String
+  list        List      @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([listId])
+}
