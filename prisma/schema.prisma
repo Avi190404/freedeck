@@ -10,8 +10,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// --- Your Trello Clone Models ---
-
 model Board {
   id        String   @id @default(uuid())
   title     String
@@ -23,8 +21,8 @@ model Board {
 model List {
   id        String   @id @default(uuid())
   title     String
-  order     Int      // Keeps lists in specific order (0, 1, 2)
-  
+  order     Int      
+
   boardId   String
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
   
@@ -40,9 +38,9 @@ model Card {
   id          String    @id @default(uuid())
   title       String
   description String?   @db.Text
-  order       Int       // Keeps cards in specific order
+  order       Int       
   
-  // Timeline features
+  // --- NEW FIELDS ---
   startDate   DateTime?
   dueDate     DateTime?
   isCompleted Boolean   @default(false)
