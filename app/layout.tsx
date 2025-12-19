@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Sidebar } from "@/components/sidebar";
+import { Toaster } from "sonner"; // <--- Added for notifications
+import { ModalProvider } from "@/components/providers/modal-provider"; // <--- Added for Card Modal
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +27,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* 1. Global Providers */}
+          <Toaster />
+          <ModalProvider />
+
+          {/* 2. Main App Layout */}
           <div className="flex min-h-screen">
             {/* Sidebar */}
             <Sidebar />
