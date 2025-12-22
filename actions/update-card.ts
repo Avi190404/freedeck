@@ -2,33 +2,35 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { isBoardOwner } from "@/lib/permissions";
 
 export async function updateCard(boardId: string, cardId: string, formData: FormData) {
+  // --- SECURITY: OWNER ONLY ---
+  const canUpdate = await isBoardOwner(boardId);
+  if (!canUpdate) {
+    return { error: "Only the board owner can edit card details." };
+  }
+  // ----------------------------
+
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
+  // Handle dates if you have them in formData
   
-  // Get date strings from the form
-  const startDateStr = formData.get("startDate") as string;
-  const dueDateStr = formData.get("dueDate") as string;
-
-  // Convert strings to Date objects (or null if empty)
-  const startDate = startDateStr ? new Date(startDateStr) : null;
-  const dueDate = dueDateStr ? new Date(dueDateStr) : null;
-
   try {
     await db.card.update({
-      where: { id: cardId },
+      where: {
+        id: cardId,
+        list: { boardId },
+      },
       data: {
         title,
         description,
-        startDate, // Saving Start Date
-        dueDate,   // Saving Due Date
       },
     });
-
-    revalidatePath(`/board/${boardId}`);
-    return { success: true };
   } catch (error) {
     return { error: "Failed to update." };
   }
+
+  revalidatePath(`/board/${boardId}`);
+  return { success: "Card updated" };
 }

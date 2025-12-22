@@ -11,10 +11,37 @@ datasource db {
 model Board {
   id            String   @id @default(uuid())
   title         String
-  imageFullUrl  String?  @db.Text  // Added this so your Board Layout doesn't break if you use background images
+  imageFullUrl  String?  @db.Text
+
+  // 1. Link to the Creator (Admin)
+  ownerId       String
+  owner         User     @relation("OwnedBoards", fields: [ownerId], references: [id], onDelete: Cascade)
+
   lists         List[]
+  
+  // 2. Link to Members (Invited Users)
+  members       BoardMember[]
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// --- NEW MODEL: Tracks which users are members of which board ---
+model BoardMember {
+  id        String   @id @default(uuid())
+  boardId   String
+  userId    String
+  
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensures a user can't be added to the same board twice
+  @@unique([boardId, userId])
+  @@index([boardId])
+  @@index([userId])
 }
 
 model List {
@@ -39,7 +66,6 @@ model Card {
   description String?   @db.Text
   order       Int       
    
-  // --- PRESERVED YOUR FIELDS ---
   startDate   DateTime?
   dueDate     DateTime?
   isCompleted Boolean   @default(false)
@@ -53,7 +79,21 @@ model Card {
   @@index([listId])
 }
 
-// --- ADDED FOR ACTIVITY LOG & COMMENTS ---
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  password  String   // Hashed Password
+  image     String?  @db.Text
+  
+  // 3. Reverse Relations for easy access
+  myBoards     Board[]       @relation("OwnedBoards") // Boards I created
+  memberships  BoardMember[] // Boards I am invited to
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 enum ACTION {
   CREATE

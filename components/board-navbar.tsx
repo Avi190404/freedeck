@@ -1,20 +1,26 @@
-import { Board } from "@prisma/client";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth-service";
 import { BoardTitleForm } from "./board-title-form";
 import { BoardOptions } from "./board-options";
+import { BoardInvite } from "@/components/board-invite";
 
-interface BoardNavbarProps {
-  data: Board;
-}
+export const BoardNavbar = async ({ data }: { data: any }) => {
+  const user = await getSession();
+  
+  // Check if current user is the owner
+  const isOwner = user?.id === data.ownerId;
 
-export const BoardNavbar = async ({
-  data
-}: BoardNavbarProps) => {
   return (
-    <div className="w-full h-14 px-6 flex items-center justify-between gap-x-4 text-foreground bg-background/50 backdrop-blur-sm border-b">
-      <BoardTitleForm data={data} />
+    <div className="w-full h-14 px-6 flex items-center justify-between gap-x-4 ...">
+      {/* Disable Title Editing if not owner */}
+      <BoardTitleForm data={data} isOwner={isOwner} /> 
       
       <div className="flex items-center gap-x-2">
-         <BoardOptions id={data.id} />
+         {/* Only show Invite button if Owner (optional, up to you) */}
+         {isOwner && <BoardInvite boardId={data.id} />}
+         
+         {/* Pass isOwner to Options */}
+         <BoardOptions id={data.id} isOwner={isOwner} />
       </div>
     </div>
   );

@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Kanban, Settings, Layers } from "lucide-react"
+import { LayoutDashboard, Kanban, Settings, Layers, LogOut } from "lucide-react" // <--- Added LogOut
 import { ModeToggle } from "@/components/toggleButton"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { logout } from "@/actions/logout" // <--- Added logout action
 
 const sidebarItems = [
   {
@@ -62,7 +63,14 @@ export function Sidebar() {
 
       {/* Footer / Toggle Area */}
       <div className="p-4 border-t flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">v1.0.0</span>
+        {/* LOGOUT BUTTON */}
+        <form action={logout}>
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <LogOut className="h-4 w-4 mr-2" />
+                Log out
+            </Button>
+        </form>
+
         <ModeToggle />
       </div>
     </aside>

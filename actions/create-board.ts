@@ -1,36 +1,44 @@
 "use server";
 
-import { z } from "zod";
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-// 1. Define the schema (validation rules)
-const CreateBoard = z.object({
-  title: z.string().min(3, {
-    message: "Title must be at least 3 characters long",
-  }),
-});
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth-service"; // <--- DID YOU ADD THIS?
 
 export async function createBoard(formData: FormData) {
-  const { title } = CreateBoard.parse({
-    title: formData.get("title"),
-  });
-
-  try {
-    // 2. Database interaction
-    await db.board.create({
-      data: {
-        title,
-      },
-    });
-  } catch (error) {
-    return {
-      message: "Database Error: Failed to Create Board.",
-    };
+  const title = formData.get("title") as string;
+  
+  if (!title) {
+    return { error: "Title is required" };
   }
 
-  // 3. Revalidate (refresh) the dashboard so the new board shows up
-  revalidatePath("/");
-  redirect("/");
+  // 1. Get User
+  const user = await getSession();
+
+  if (!user) {
+    return { error: "Unauthorized" };
+  }
+
+  let board;
+
+  try {
+    board = await db.board.create({
+      data: {
+        title,
+        ownerId: user.id, // <--- CRITICAL: THIS MUST BE HERE
+      },
+    });
+
+    // Create default list
+    await db.list.create({
+      data: { title: "Todo", order: 1, boardId: board.id }
+    });
+
+  } catch (error) {
+    console.log("Database Error:", error); // Check terminal for this!
+    return { error: "Failed to create board." };
+  }
+
+  revalidatePath(`/board/${board.id}`);
+  redirect(`/board/${board.id}`);
 }
