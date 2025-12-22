@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,11 +9,12 @@ datasource db {
 }
 
 model Board {
-  id        String   @id @default(uuid())
-  title     String
-  lists     List[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  title         String
+  imageFullUrl  String?  @db.Text  // Added this so your Board Layout doesn't break if you use background images
+  lists         List[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model List {
@@ -25,9 +24,9 @@ model List {
 
   boardId   String
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  
+   
   cards     Card[]
-  
+   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -39,8 +38,8 @@ model Card {
   title       String
   description String?   @db.Text
   order       Int       
-  
-  // --- NEW FIELDS ---
+   
+  // --- PRESERVED YOUR FIELDS ---
   startDate   DateTime?
   dueDate     DateTime?
   isCompleted Boolean   @default(false)
@@ -52,4 +51,35 @@ model Card {
   updatedAt   DateTime  @updatedAt
 
   @@index([listId])
+}
+
+// --- ADDED FOR ACTIVITY LOG & COMMENTS ---
+
+enum ACTION {
+  CREATE
+  UPDATE
+  DELETE
+  COMMENT
+}
+
+enum ENTITY_TYPE {
+  BOARD
+  LIST
+  CARD
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  orgId       String
+  action      ACTION
+  entityId    String
+  entityType  ENTITY_TYPE
+  entityTitle String
+  userId      String
+  userImage   String      @db.Text
+  userName    String      @db.Text
+  message     String?     @db.Text
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }

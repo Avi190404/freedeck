@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
-import { ListWithCards } from "../types"; 
+import { ListWithCards } from "@/types"; 
 import { CardForm } from "./card-form";
 import { CardItem } from "./card-item";
+import { ListHeader } from "./list-header";
 
 interface ListItemProps {
   data: ListWithCards;
@@ -17,6 +19,8 @@ export const ListItem = ({
   data,
   index,
 }: ListItemProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -38,6 +42,14 @@ export const ListItem = ({
     transition,
   };
 
+  const enableEditing = () => {
+    setIsEditing(true);
+  };
+
+  const disableEditing = () => {
+    setIsEditing(false);
+  };
+
   if (isDragging) {
     return (
       <div 
@@ -48,40 +60,49 @@ export const ListItem = ({
     );
   }
 
-  // CHANGE: Switched from <li> to <div> to remove the bullet point
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="shrink-0 h-full w-72 select-none"
+      // FIX 3: 'max-h-full' ensures the list doesn't grow taller than the screen
+      className="shrink-0 h-full w-72 select-none max-h-full"
     >
       <div 
         {...listeners} 
-        className="w-full rounded-md bg-secondary pb-2 shadow-sm"
+        // FIX 4: 'flex flex-col max-h-full' enables the column layout
+        className="w-full rounded-md bg-[#f1f2f4] dark:bg-neutral-900 shadow-sm flex flex-col max-h-full"
       >
-        <div className="pt-2 px-2 text-sm font-semibold flex justify-between items-start gap-x-2">
-          <div className="w-full text-sm px-2.5 py-1 h-7 font-medium border-transparent truncate">
-            {data.title}
-          </div>
+        {/* Header - Stays at top */}
+        <ListHeader 
+            onAddCard={enableEditing} 
+            data={data} 
+        />
+
+        {/* FIX 5: 'overflow-y-auto' enables scrolling ONLY for cards */}
+        <div className="flex-1 overflow-y-auto px-2 py-0.5 mx-1 flex flex-col gap-y-2 min-h-0">
+            <SortableContext 
+              items={data.cards.map(card => card.id)} 
+              strategy={verticalListSortingStrategy}
+            >
+                  {data.cards.map((card, index) => (
+                      <CardItem 
+                        index={index} 
+                        key={card.id} 
+                        data={card} 
+                      />
+                  ))}
+            </SortableContext>
         </div>
 
-        <SortableContext 
-           items={data.cards.map(card => card.id)} 
-           strategy={verticalListSortingStrategy}
-        >
-          <div className="flex flex-col gap-y-2 px-2 py-0.5 mx-1 mt-2 min-h-[10px]">
-              {data.cards.map((card, index) => (
-                  <CardItem 
-                    index={index} 
-                    key={card.id} 
-                    data={card} 
-                  />
-              ))}
-          </div>
-        </SortableContext>
-
-        <CardForm listId={data.id} boardId={data.boardId} />
+        {/* Footer - Stays at bottom */}
+        <CardForm 
+            listId={data.id} 
+            boardId={data.boardId} 
+            isEditing={isEditing}
+            enableEditing={enableEditing}
+            disableEditing={disableEditing}
+        />
       </div>
     </div>
   );

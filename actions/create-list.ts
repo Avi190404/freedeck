@@ -1,24 +1,15 @@
 "use server";
 
-import { z } from "zod";
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
 
-const CreateList = z.object({
-  title: z.string().min(1, {
-    message: "Title is required",
-  }),
-  boardId: z.string(),
-});
-
-export async function createList(formData: FormData) {
-  const { title, boardId } = CreateList.parse({
-    title: formData.get("title"),
-    boardId: formData.get("boardId"),
-  });
-
+export async function createList(boardId: string, title: string) {
   try {
-    // 1. Find the last list to calculate the new order
+    if (!title || !boardId) {
+        return { error: "Missing fields" };
+    }
+
+    // 1. Get the last list to calculate the new order
     const lastList = await db.list.findFirst({
       where: { boardId: boardId },
       orderBy: { order: "desc" },
@@ -27,8 +18,8 @@ export async function createList(formData: FormData) {
 
     const newOrder = lastList ? lastList.order + 1 : 1;
 
-    // 2. Create the new list
-    await db.list.create({
+    // 2. Create the list
+    const list = await db.list.create({
       data: {
         title,
         boardId,
@@ -36,13 +27,11 @@ export async function createList(formData: FormData) {
       },
     });
 
-    // 3. Refresh the board page
+    // 3. Revalidate the board page so the new list appears
     revalidatePath(`/board/${boardId}`);
-    return { success: true };
     
+    return { data: list };
   } catch (error) {
-    return {
-      error: "Failed to create list."
-    };
+    return { error: "Failed to create." };
   }
 }

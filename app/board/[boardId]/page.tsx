@@ -1,53 +1,37 @@
 import { db } from "@/lib/db";
-import { notFound } from "next/navigation";
 import { BoardContent } from "@/components/board-content";
 
 interface BoardIdPageProps {
-  params: Promise<{
-    boardId: string;
-  }>;
+  params: Promise<{ boardId: string }>;
 }
 
-export default async function BoardIdPage({
+const BoardIdPage = async ({
   params,
-}: BoardIdPageProps) {
+}: BoardIdPageProps) => {
   const { boardId } = await params;
 
-  const board = await db.board.findUnique({
+  const lists = await db.list.findMany({
     where: {
-      id: boardId,
+      boardId: boardId,
     },
     include: {
-      lists: {
+      cards: {
         orderBy: {
           order: "asc",
         },
-        include: {
-          cards: {
-            orderBy: {
-              order: "asc",
-            },
-          },
-        },
       },
+    },
+    orderBy: {
+      order: "asc",
     },
   });
 
-  if (!board) {
-    notFound();
-  }
-
   return (
-    <div className="p-4 h-full overflow-x-auto bg-background">
-       <div className="flex items-center justify-between mb-4 px-2">
-        <h1 className="text-2xl font-bold text-foreground">{board.title}</h1>
-      </div>
-      
-      {/* Hand off to Client Component */}
-      <BoardContent 
-        boardId={board.id} 
-        data={board.lists} 
-      />
-    </div>
+    <BoardContent
+      boardId={boardId}
+      data={lists}
+    />
   );
-}
+};
+
+export default BoardIdPage;

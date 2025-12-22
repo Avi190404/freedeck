@@ -63,7 +63,7 @@ export const BoardTitleForm = ({
           name="title"
           onBlur={onBlur}
           defaultValue={title}
-          className="text-lg font-bold px-[7px] py-1 h-7 bg-transparent focus-visible:outline-none focus-visible:ring-transparent border-none"
+          className="text-xl font-bold px-[7px] py-1 h-7 bg-transparent focus-visible:outline-none focus-visible:ring-transparent border-none"
         />
       </form>
     );
@@ -73,7 +73,7 @@ export const BoardTitleForm = ({
     <Button
       onClick={enableEditing}
       variant="ghost"
-      className="font-bold text-lg h-auto w-auto p-1 px-2"
+      className="font-bold text-xl h-auto w-auto p-1 px-2"
     >
       {title}
     </Button>
