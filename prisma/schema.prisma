@@ -26,7 +26,7 @@ model Board {
   updatedAt     DateTime @updatedAt
 }
 
-// --- NEW MODEL: Tracks which users are members of which board ---
+// Tracks which users are members of which board
 model BoardMember {
   id        String   @id @default(uuid())
   boardId   String
@@ -87,13 +87,43 @@ model User {
   password  String   // Hashed Password
   image     String?  @db.Text
   
-  // 3. Reverse Relations for easy access
-  myBoards     Board[]       @relation("OwnedBoards") // Boards I created
-  memberships  BoardMember[] // Boards I am invited to
+  // Reverse Relations for easy access
+  myBoards      Board[]       @relation("OwnedBoards") // Boards I created
+  memberships   BoardMember[] // Boards I am invited to
+  
+  // NEW: Notifications received by this user
+  notifications Notification[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// --- NEW NOTIFICATION SYSTEM ---
+
+enum NOTIFICATION_TYPE {
+  BOARD_INVITE
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  
+  userId      String   // Recipient (The person being invited)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  senderId    String   // Who sent the invite (User ID)
+  senderName  String   // Store name for display (e.g. "Avi")
+  
+  type        NOTIFICATION_TYPE
+  
+  entityId    String   // The Board ID
+  entityTitle String   // The Board Title (e.g. "Project Alpha")
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+// --- EXISTING AUDIT LOG ---
 
 enum ACTION {
   CREATE

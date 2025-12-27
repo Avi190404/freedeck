@@ -7,12 +7,15 @@ import { updateBoard } from "@/actions/update-board";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+// 1. Add isOwner to the interface
 interface BoardTitleFormProps {
   data: Board;
+  isOwner?: boolean;
 }
 
 export const BoardTitleForm = ({
   data,
+  isOwner, // 2. Receive the prop
 }: BoardTitleFormProps) => {
   const formRef = useRef<ElementRef<"form">>(null);
   const inputRef = useRef<ElementRef<"input">>(null);
@@ -21,6 +24,9 @@ export const BoardTitleForm = ({
   const [isEditing, setIsEditing] = useState(false);
 
   const enableEditing = () => {
+    // 3. Security: Prevent editing if not the owner
+    if (!isOwner) return;
+
     setIsEditing(true);
     setTimeout(() => {
       inputRef.current?.focus();
@@ -39,11 +45,17 @@ export const BoardTitleForm = ({
         return disableEditing();
     }
 
-    updateBoard(data.id, title)
-      .then(() => {
-        toast.success(`Board renamed to "${title}"`);
-        setTitle(title);
-        disableEditing();
+    // Assuming your updateBoard action takes (id, title) based on your provided code
+    updateBoard(data.id, formData) 
+      .then((res) => {
+        // Handle response structure depending on your action return type
+        if (res?.error) {
+            toast.error(res.error);
+        } else {
+            toast.success(`Board renamed to "${title}"`);
+            setTitle(title);
+            disableEditing();
+        }
       })
       .catch(() => {
         toast.error("Failed to rename board");
@@ -74,6 +86,8 @@ export const BoardTitleForm = ({
       onClick={enableEditing}
       variant="ghost"
       className="font-bold text-xl h-auto w-auto p-1 px-2"
+      // 4. Visual: Change cursor to indicate if it is clickable
+      style={{ cursor: isOwner ? "pointer" : "default" }}
     >
       {title}
     </Button>

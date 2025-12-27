@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Kanban, Settings, Layers, LogOut } from "lucide-react" // <--- Added LogOut
+import { LayoutDashboard, Kanban, Settings, Layers, LogOut } from "lucide-react"
 import { ModeToggle } from "@/components/toggleButton"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { logout } from "@/actions/logout" // <--- Added logout action
+import { logout } from "@/actions/logout"
+import { NotificationBell } from "@/components/notification-bell" // <--- Import Bell
 
 const sidebarItems = [
   {
@@ -62,16 +63,20 @@ export function Sidebar() {
       </nav>
 
       {/* Footer / Toggle Area */}
-      <div className="p-4 border-t flex items-center justify-between">
-        {/* LOGOUT BUTTON */}
-        <form action={logout}>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+      <div className="p-4 border-t flex flex-col gap-y-2">
+         {/* Row 1: Notifications & Mode Toggle */}
+         <div className="flex items-center justify-between w-full">
+            <NotificationBell />
+            <ModeToggle />
+         </div>
+
+         {/* Row 2: Logout Button */}
+        <form action={logout} className="w-full">
+            <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground">
                 <LogOut className="h-4 w-4 mr-2" />
                 Log out
             </Button>
         </form>
-
-        <ModeToggle />
       </div>
     </aside>
   )

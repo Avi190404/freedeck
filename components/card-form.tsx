@@ -1,39 +1,52 @@
 "use client";
 
-import { useState, useRef, ElementRef } from "react";
+import { forwardRef, useRef, ElementRef, KeyboardEventHandler } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createCard } from "@/actions/create-card";
+import { toast } from "sonner"; 
 
 interface CardFormProps {
   listId: string;
   boardId: string;
+  isEditing: boolean;
+  enableEditing: () => void;
+  disableEditing: () => void;
 }
 
-export const CardForm = ({
+export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(({
   listId,
   boardId,
-}: CardFormProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+  isEditing,
+  enableEditing,
+  disableEditing,
+}, ref) => {
   const formRef = useRef<ElementRef<"form">>(null);
-
-  const enableEditing = () => {
-    setIsEditing(true);
-  };
-
-  const disableEditing = () => {
-    setIsEditing(false);
-  };
 
   const onSubmit = async (formData: FormData) => {
     const title = formData.get("title") as string;
     
-    if (!title) return disableEditing();
+    if (!title) {
+      return disableEditing();
+    }
 
-    await createCard(formData);
-    
-    formRef.current?.reset();
-    // Don't disable editing automatically so you can add multiple cards fast!
+    try {
+      // FIX: Pass 'formData' directly.
+      // Your createCard action expects FormData, not an object.
+      await createCard(formData);
+      
+      toast.success("Card created");
+      formRef.current?.reset();
+    } catch (error) {
+      toast.error("Failed to create card");
+    }
+  };
+
+  const onTextareakeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
+    }
   };
 
   if (isEditing) {
@@ -46,17 +59,13 @@ export const CardForm = ({
         <textarea
           id="title"
           name="title"
+          onKeyDown={onTextareakeyDown}
+          ref={ref}
           placeholder="Enter a title for this card..."
           className="w-full resize-none bg-background text-foreground shadow-sm rounded-md border p-2 focus:outline-none focus:ring-1 focus:ring-ring"
           rows={3}
-          onKeyDown={(e) => {
-            // Allow "Enter" to submit
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              formRef.current?.requestSubmit();
-            }
-          }}
         />
+        {/* Hidden inputs ensure these values are inside the formData */}
         <input hidden id="listId" name="listId" value={listId} readOnly />
         <input hidden id="boardId" name="boardId" value={boardId} readOnly />
 
@@ -85,4 +94,6 @@ export const CardForm = ({
       </Button>
     </div>
   );
-};
+});
+
+CardForm.displayName = "CardForm";

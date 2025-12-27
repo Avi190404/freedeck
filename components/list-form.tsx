@@ -42,14 +42,14 @@ export const ListForm = ({
 
   useEventListener("keydown", onKeyDown);
   
-  // FIX: Cast the ref to satisfy TypeScript strict mode
   useOnClickOutside(formRef as RefObject<HTMLElement>, disableEditing);
 
   const onSubmit = (formData: FormData) => {
     const title = formData.get("title") as string;
     
-    // FIX: Pass strings directly to match the Server Action update
-    createList(boardId, title)
+    // FIX: Pass a single object containing both title and boardId
+    // This matches the action signature: createList(data: { title, boardId } | FormData)
+    createList({ title, boardId })
       .then((data) => {
         if (data.error) {
             toast.error(data.error);
@@ -70,17 +70,16 @@ export const ListForm = ({
         <form
           ref={formRef}
           action={onSubmit}
-          // FIX: Dark mode styling (dark:bg-neutral-900)
           className="w-full p-3 rounded-md bg-white dark:bg-neutral-900 space-y-4 shadow-md"
         >
           <Input
             ref={inputRef}
             id="title"
             name="title"
-            // FIX: Input text color in dark mode
             className="text-sm px-2 py-1 h-7 font-medium border-transparent hover:border-input focus:border-input transition bg-transparent dark:text-white dark:placeholder:text-neutral-400"
             placeholder="Enter list title..."
           />
+          {/* Note: We don't need a hidden input here because we are constructing the object manually in onSubmit */}
           <div className="flex items-center gap-x-1">
             <Button 
                 type="submit" 
@@ -102,7 +101,6 @@ export const ListForm = ({
     <div className="shrink-0 w-72 select-none mr-4">
       <Button
         onClick={enableEditing}
-        // FIX: Translucent button for dark mode visibility
         className="w-full rounded-md bg-white/50 hover:bg-white/80 dark:bg-black/40 dark:hover:bg-black/60 transition p-3 flex items-center font-medium text-sm text-black dark:text-white"
         variant="ghost"
       >

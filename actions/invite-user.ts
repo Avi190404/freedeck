@@ -21,7 +21,7 @@ export async function inviteUser(formData: FormData) {
     const board = await db.board.findFirst({
       where: {
         id: boardId,
-        ownerId: session.id, // Only owner can invite
+        ownerId: session.id,
       },
     });
 
@@ -50,16 +50,32 @@ export async function inviteUser(formData: FormData) {
       return { error: "User is already a member of this board." };
     }
 
-    // 5. Create the Membership
-    await db.boardMember.create({
-      data: {
-        boardId,
-        userId: userToInvite.id,
-      },
+    // 5. Check if invite already sent (Prevent spam)
+    const existingInvite = await db.notification.findFirst({
+      where: { 
+        userId: userToInvite.id, 
+        entityId: boardId, 
+        type: "BOARD_INVITE" 
+      }
     });
 
-    revalidatePath(`/board/${boardId}`);
-    return { success: "User invited successfully!" };
+    if (existingInvite) {
+      return { error: "Invite already sent to this user." };
+    }
+
+    // 6. Create Notification (Instead of direct add)
+    await db.notification.create({
+      data: {
+        userId: userToInvite.id,      // Recipient
+        senderId: session.id,         // Sender
+        senderName: session.name || "Someone",
+        type: "BOARD_INVITE",
+        entityId: board.id,
+        entityTitle: board.title
+      }
+    });
+
+    return { success: "Invite sent successfully!" };
 
   } catch (error) {
     return { error: "Failed to invite user." };
